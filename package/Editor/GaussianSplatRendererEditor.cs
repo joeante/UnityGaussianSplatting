@@ -315,6 +315,9 @@ namespace GaussianSplatting.Editor
 
             if (GUILayout.Button("Export PLY"))
                 ExportPlyFile(gs, m_ExportBakeTransform);
+            if (GUILayout.Button("Save Changes"))
+                GaussianSplatAssetCreator.UpdateAsset(gs.m_Asset, gs, m_ExportBakeTransform);
+
             if (asset.posFormat > GaussianSplatAsset.VectorFormat.Norm16 ||
                 asset.scaleFormat > GaussianSplatAsset.VectorFormat.Norm16 ||
                 asset.colorFormat > GaussianSplatAsset.ColorFormat.Float16x4 ||
@@ -409,16 +412,7 @@ namespace GaussianSplatting.Editor
             gpuDeleted.GetData(deleted);
 
             // count non-deleted splats
-            int aliveCount = 0;
-            for (int i = 0; i < data.Length; ++i)
-            {
-                int wordIdx = i >> 5;
-                int bitIdx = i & 31;
-                bool isDeleted = (deleted[wordIdx] & (1u << bitIdx)) != 0;
-                bool isCutout = data[i].nor.sqrMagnitude > 0;
-                if (!isDeleted && !isCutout)
-                    ++aliveCount;
-            }
+            int aliveCount = GaussianSplatAssetCreator.CountNonDeletedSplats(data, deleted);
 
             using FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write);
             // note: this is a long string! but we don't use multiline literal because we want guaranteed LF line ending
